@@ -139,13 +139,86 @@ public class Piece {
                 }
                 
                 
-                if (!isSimulating) {
-                    filterOutMovesInCheck(moves);
-                }
+                
                 break;
         }
+
+        // If it's not the king and we are not simulating, filter out moves that could expose the king to check
+    if (!isSimulating && !name.equalsIgnoreCase("king")) {
+        PinnedCase(moves);
+    }
+
+    // If it's the king, filter out moves that put it in check
+    if (!isSimulating && name.equalsIgnoreCase("king")) {
+        filterOutMovesInCheck(moves);
+    }
         
         return moves;
+    }
+
+    private void PinnedCase(LinkedList<int[]> moves) {
+        // Backup the original position of this piece
+        int originalXp = this.xp;
+        int originalYp = this.yp;
+    
+        // Find the king of the same color
+        Piece king = null;
+        if (this.isWhite) {
+            king = ChessGame.wking;
+        }else
+            king = ChessGame.bking;
+    
+        if (king == null) return; // No king found, shouldn't happen in a valid game
+    
+        // Create a list to hold the valid moves that don't expose the king to check
+        LinkedList<int[]> validMoves = new LinkedList<>();
+    
+        // For each move in the moves list, simulate the move
+        for (int[] move : moves) {
+            int targetXp = move[0];
+            int targetYp = move[1];
+            Piece tmp=getPiece(targetXp, targetYp);
+            // Temporarily move the piece to the target position
+            if(tmp!=null)
+            {
+            	if(tmp.isWhite!=this.isWhite)
+            		tmp.kill();
+            }
+            
+            this.xp = targetXp;
+            this.yp = targetYp;
+    
+            // Check if after this move the king is in check
+            if (!isKingInCheckAfterMove(king)) {
+                validMoves.add(move); // This move is valid, doesn't expose the king
+            }
+    
+            // Restore the original position of the piece
+            this.xp = originalXp;
+            this.yp = originalYp;
+            if(tmp!=null)
+            	tmp.revive();
+        }
+    
+        // Replace the original moves list with only valid moves
+        moves.clear();
+        moves.addAll(validMoves);
+    }
+    
+    // Helper method to check if the king would be in check after a simulated move
+    private boolean isKingInCheckAfterMove(Piece king) {
+        // Loop through all the enemy pieces and check if any of them can attack the king
+        for (Piece p : ps) {
+            if (p.isWhite != king.isWhite) {
+                LinkedList<int[]> enemyMoves = p.getValidMoves(true); // Get moves for the enemy piece
+                for (int[] enemyMove : enemyMoves) {
+                    if (enemyMove[0] == king.xp && enemyMove[1] == king.yp) {
+                        return true; // The king is under attack after this move
+                    }
+                }
+            }
+        }
+        return false;
     }
     
     private void addCastlingMoves(LinkedList<int[]> moves) {
@@ -239,6 +312,9 @@ public class Piece {
         for (int i = 1; i < 8; i++) {
             int newX = xp + i * dx;
             int newY = yp + i * dy;
+            if (newX < 0 || newX > 7 || newY < 0 || newY > 7) {
+                break; // Out of bounds
+            }
             if (getPiece(newX, newY) != null) {
                 if (getPiece(newX, newY).isWhite != isWhite) {
                     moves.add(new int[]{newX, newY}); // Can capture
@@ -253,7 +329,7 @@ public class Piece {
         for (int i = 1; i < 8; i++) {
             int newX = xp + i * dx;
             int newY = yp + i * dy;
-            if (newX < 0 || newX >= 8 || newY < 0 || newY >= 8) {
+            if (newX < 0 || newX > 7 || newY < 0 || newY > 7) {
                 break; // Out of bounds
             }
             Piece targetPiece = getPiece(newX, newY);
@@ -343,6 +419,9 @@ public class Piece {
 
     public void kill() {
         ps.remove(this);
+    }
+    public void revive() {
+    	ps.add(this);
     }
 
     public static Piece getPiece(int x, int y) {

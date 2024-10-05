@@ -19,6 +19,8 @@ public class ChessGame {
     public static Piece selectedPiece = null;
     public static boolean whiteTurn = true; // Track whose turn it is (true = white's turn, false = black's)
     public static boolean isGameEnded = false;
+    public static Piece bking = new Piece(4, 0, false, "king", ps);
+    public static Piece wking = new Piece(4, 7, true, "king", ps); 
     public static void main(String[] args) throws IOException {
 
         BufferedImage all = ImageIO.read(new File("C:\\Users\\RTX\\Desktop\\chess_game_java_swing-master\\src\\assets\\chess.png"));
@@ -36,7 +38,6 @@ public class ChessGame {
         Piece bknight = new Piece(1, 0, false, "knight", ps);
         Piece bbishop = new Piece(2, 0, false, "bishop", ps);
         Piece bqueen = new Piece(3, 0, false, "queen", ps);
-        Piece bking = new Piece(4, 0, false, "king", ps);
         Piece bbishop2 = new Piece(5, 0, false, "bishop", ps);
         Piece bknight2 = new Piece(6, 0, false, "knight", ps);
         Piece brook2 = new Piece(7, 0, false, "rook", ps);
@@ -49,7 +50,6 @@ public class ChessGame {
         Piece wknight = new Piece(1, 7, true, "knight", ps);
         Piece wbishop = new Piece(2, 7, true, "bishop", ps);
         Piece wqueen = new Piece(3, 7, true, "queen", ps);
-        Piece wking = new Piece(4, 7, true, "king", ps);
         Piece wbishop2 = new Piece(5, 7, true, "bishop", ps);
         Piece wknight2 = new Piece(6, 7, true, "knight", ps);
         Piece wrook2 = new Piece(7, 7, true, "rook", ps);
@@ -206,6 +206,7 @@ public class ChessGame {
 
                     // Re-check if the king is still in check after this move
                     if (!isKingInCheck(currentKing)) {
+                    	System.out.println("move: x="+move[0]+" y="+move[1]);
                         hasValidMoves = true; // Valid move found
                     }
 
