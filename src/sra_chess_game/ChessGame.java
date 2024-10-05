@@ -13,18 +13,19 @@ import java.util.LinkedList;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-
 public class ChessGame {
     public static LinkedList<Piece> ps = new LinkedList<>();
+    public static Piece bking = new Piece(4, 0, false, "king", ps);
+    public static Piece wking = new Piece(4, 7, true, "king", ps); 
     public static Piece selectedPiece = null;
     public static boolean whiteTurn = true; // Track whose turn it is (true = white's turn, false = black's)
     public static boolean isGameEnded = false;
-    public static Piece bking = new Piece(4, 0, false, "king", ps);
-    public static Piece wking = new Piece(4, 7, true, "king", ps); 
+    static JFrame frame;
+    static JPanel pn;
+    static Image imgs[]  = new Image[12];;
     public static void main(String[] args) throws IOException {
 
-        BufferedImage all = ImageIO.read(new File("C:\\Users\\RTX\\Desktop\\chess_game_java_swing-master\\src\\assets\\chess.png"));
-        Image imgs[] = new Image[12];
+        BufferedImage all = ImageIO.read(new File("src\\assets\\chess.png"));
         int ind = 0;
         for (int y = 0; y < 400; y += 200) {
             for (int x = 0; x < 1200; x += 200) {
@@ -57,10 +58,9 @@ public class ChessGame {
             new Piece(i, 6, true, "pawn", ps);
         }
 
-        JFrame frame = new JFrame();
-        frame.setBounds(10, 10, 512, 512);
-        frame.setUndecorated(true);
-        JPanel pn = new JPanel() {
+         frame = new JFrame();
+        frame.setBounds(10, 10, 530, 552);
+          pn = new JPanel() {
             @Override
             public void paint(Graphics g) {
                 boolean white = true;
@@ -71,6 +71,9 @@ public class ChessGame {
                         } else {
                             g.setColor(new Color(119, 148, 85));
                         }
+                       /* if(y==7) {
+                            g.setColor(new Color(14, 8, 185));
+                        }*/
                         g.fillRect(x * 64, y * 64, 64, 64);
                         white = !white;
                     }
@@ -105,7 +108,7 @@ public class ChessGame {
         };
 
         frame.add(pn);
-        frame.addMouseMotionListener(new MouseMotionListener() {
+        pn.addMouseMotionListener(new MouseMotionListener() {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (selectedPiece != null) {
@@ -119,7 +122,7 @@ public class ChessGame {
             public void mouseMoved(MouseEvent e) {}
         });
 
-        frame.addMouseListener(new MouseListener() {
+        pn.addMouseListener(new MouseListener() {
             @Override
             public void mousePressed(MouseEvent e) {
             	if (isGameEnded) return; // Prevent any further moves 
@@ -135,14 +138,10 @@ public class ChessGame {
                 if (selectedPiece != null) {
                    boolean moved= selectedPiece.move(e.getX() / 64, e.getY() / 64);
                    if(moved) {
+                	   if(selectedPiece.name=="pawn")
+                		   checkPromotion(selectedPiece);
                 	   whiteTurn = !whiteTurn; // Switch turns after a valid move
                 	   checkEndgame();
-                	// Reset en passant flags for the next turn
-                       for (Piece p : ps) {
-                           if (p.isWhite == whiteTurn) {
-                               p.canBeEnPassantCaptured = false;
-                           }
-                       }
                    }
                     
                     selectedPiece = null;
@@ -252,6 +251,69 @@ public class ChessGame {
             }
         }
         return false; // King is not in check
+    }
+    
+    
+    public static void checkPromotion(Piece piece ) {
+    	int end=7,py=(int) (64*3.5);
+    	if(piece.isWhite==true) {
+    		end=0;
+    		py=30;
+    	}
+
+    	if(piece.y/60==end) {
+    		System.out.println("here is a pawn getting promoted");
+    		PFrame ppn = new PFrame(piece);
+
+    	}
+    }
+    
+    public static void changePiece(Piece piece,String newp) {
+    	piece.name=newp;
+         frame.repaint(); 
+    }
+    
+    
+    public static void repaint(Graphics g) {
+        boolean white = true;
+        for (int y = 0; y < 8; y++) {
+            for (int x = 0; x < 8; x++) {
+                if (white) {
+                    g.setColor(new Color(235, 235, 208));
+                } else {
+                    g.setColor(new Color(119, 148, 85));
+                }
+                g.fillRect(x * 64, y * 64, 64, 64);
+                white = !white;
+            }
+            white = !white;
+        }
+
+        if (selectedPiece != null) {
+            LinkedList<int[]> moves = selectedPiece.getValidMoves(false);
+            g.setColor(new Color(255, 255, 0, 128)); // Highlight valid move squares in yellow
+            for (int[] move : moves) {
+            	if (Math.abs(move[0] - selectedPiece.xp) == 2) { // Castling move
+                    g.fillRect(move[0] * 64, move[1] * 64, 64, 64);
+                }
+                g.fillRect(move[0] * 64, move[1] * 64, 64, 64);
+            }
+        }
+
+        for (Piece p : ps) {
+            int ind = 0;
+            switch (p.name.toLowerCase()) {
+                case "king": ind = 0; break;
+                case "queen": ind = 1; break;
+                case "bishop": ind = 2; break;
+                case "knight": ind = 3; break;
+                case "rook": ind = 4; break;
+                case "pawn": ind = 5; break;
+            }
+            if (!p.isWhite) ind += 6;
+            g.drawImage(imgs[ind], p.x, p.y, pn);
+        }
+
     }
 
 }
